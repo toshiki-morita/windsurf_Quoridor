@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>コリドールオンライン</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="menu-screen">
+            <h1>コリドール</h1>
+            <button id="start-pvp" class="menu-button">プレイヤー対戦</button>
+            <button id="start-pvc" class="menu-button">CPU対戦</button>
+        </div>
+
+        <div id="game-screen" style="display:none;">
+            <div id="player-info">
+                <div id="player1-info">プレイヤー1: 壁 <span id="p1-walls">10</span>枚</div>
+                <div id="player2-info">プレイヤー2: 壁 <span id="p2-walls">10</span>枚</div>
+            </div>
+            <div id="current-turn"></div>
+            <div id="board-area">
+                </div>
+            <div id="message-area"></div>
+            <button id="reset-game" style="display:none;">新しいゲーム</button>
+        </div>
+
+        <div id="victory-screen" style="display:none;">
+            <h2 id="winner-message"></h2>
+            <div id="victory-effect">🎉</div>
+            <button id="play-again" class="menu-button">もう一度プレイ</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,202 @@
+body {
+    font-family: 'Segoe UI', 'Meiryo', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    background-image: url('https://images.pexels.com/photos/235985/pexels-photo-235985.jpeg');
+    background-size: cover;
+    color: #4f3429;
+}
+
+#game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: rgba(240, 230, 210, 0.85); /* 半透明のベージュ */
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#menu-screen, #victory-screen {
+    text-align: center;
+    padding: 20px;
+}
+
+#menu-screen h1, #victory-screen h2 {
+    color: #5a3d2b;
+    font-size: 2.5em;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+.menu-button, #reset-game, #play-again {
+    background-color: #8d6e63; /* 少し落ち着いた木の色 */
+    color: white;
+    border: 1px solid #795548;
+    padding: 15px 30px;
+    border-radius: 10px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    margin: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2), inset 0 -2px 2px rgba(0,0,0,0.1);
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+}
+.menu-button:hover, #reset-game:hover, #play-again:hover {
+    background-color: #795548;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0,0,0,0.25), inset 0 -1px 1px rgba(0,0,0,0.1);
+}
+
+#game-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#player-info {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    max-width: 500px;
+    margin-bottom: 20px;
+    font-size: 1em;
+}
+#player1-info, #player2-info {
+    padding: 10px 15px;
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+#current-turn {
+    font-weight: bold;
+    font-size: 1.2em;
+    color: #c62828;
+    margin-bottom: 15px;
+    text-align: center;
+    width: 100%;
+    text-shadow: 1px 1px 1px rgba(255,255,255,0.5);
+}
+
+#board-area {
+    position: relative;
+    width: 450px;
+    height: 450px;
+    background-image: url('https://images.pexels.com/photos/139312/pexels-photo-139312.jpeg');
+    background-size: cover;
+    border: 8px solid #5d4037; /* 濃い木枠 */
+    border-radius: 10px;
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    grid-template-rows: repeat(9, 1fr);
+    gap: 0;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.cell {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    border: 1px solid rgba(0, 0, 0, 0.1); /* 溝を細く */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: background-color 0.3s;
+}
+.cell.valid-move {
+    background-color: rgba(189, 243, 189, 0.7) !important;
+    cursor: pointer;
+}
+.cell.selected-pawn {
+     outline: 3px solid #ffd700;
+     outline-offset: -3px;
+     background-color: rgba(255, 215, 0, 0.2);
+}
+
+
+.pawn {
+    width: 70%;
+    height: 70%;
+    border-radius: 50%;
+    z-index: 10;
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+    box-shadow: inset 0 -4px 8px rgba(0,0,0,0.4), 0 4px 6px rgba(0,0,0,0.2);
+}
+#pawn1 { background: radial-gradient(circle at 50% 40%, #ff7a6b, #e74c3c 60%, #a8382c 100%); }
+#pawn2 { background: radial-gradient(circle at 50% 40%, #5dade2, #3498db 60%, #21618c 100%); }
+#pawn3 { background: radial-gradient(circle at 50% 40%, #58d68d, #2ecc71 60%, #1d8348 100%); }
+#pawn4 { background: radial-gradient(circle at 50% 40%, #f7dc6f, #f1c40f 60%, #b7950b 100%); }
+
+
+/* 壁スロットと壁のスタイル */
+.wall-slot {
+    position: absolute;
+    background-color: rgba(255,255,255,0.1);
+    z-index: 5;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+.wall-slot:hover {
+    background-color: rgba(255, 99, 71, 0.7); /* トマト色、より目立つように */
+}
+.wall-slot.horizontal {
+    width: calc(2 * (100% / 9) + 4px);
+    height: 8px;
+    transform: translate(-2px, -4px);
+}
+.wall-slot.vertical {
+    width: 8px;
+    height: calc(2 * (100% / 9) + 4px);
+    transform: translate(-4px, -2px);
+}
+
+.wall {
+    position: absolute;
+    background-color: #8d6e63; /* 壁の色 */
+    background-image: linear-gradient(to right, rgba(0,0,0,0.1), transparent 20%, transparent 80%, rgba(0,0,0,0.1));
+    z-index: 7;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.2);
+    border: 1px solid #5d4037;
+}
+.wall.horizontal {
+    width: calc(2 * (100% / 9) + 2px); /* border分調整 */
+    height: 6px; /* border分調整 */
+    transform: translate(-2px, -4px);
+}
+.wall.vertical {
+    width: 6px; /* border分調整 */
+    height: calc(2 * (100% / 9) + 2px); /* border分調整 */
+    transform: translate(-4px, -2px);
+}
+
+#message-area {
+    margin-top: 20px;
+    min-height: 25px;
+    color: #d32f2f;
+    font-weight: bold;
+    font-size: 1.1em;
+    text-align: center;
+    width: 100%;
+}
+
+#victory-effect {
+    font-size: 4em;
+    animation: confetti-fall 2s ease-out forwards;
+    text-shadow: 0 0 15px gold;
+}
+
+@keyframes confetti-fall {
+    0% { transform: translateY(-150px) scale(0.5); opacity: 0; }
+    70% { transform: translateY(10px) scale(1.2); opacity: 1; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+}
