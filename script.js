@@ -12,7 +12,9 @@ const winnerMessage = document.getElementById('winner-message');
 
 const startPvpButton = document.getElementById('start-pvp');
 const startPvcButton = document.getElementById('start-pvc');
-const resetGameButton = document.getElementById('reset-game'); 
+const gameControls = document.querySelector('.game-controls');
+const resetGameButton = document.getElementById('reset-game');
+const backToSelectBtn = document.getElementById('back-to-select-btn'); 
 const playAgainButton = document.getElementById('play-again');
 
 
@@ -123,7 +125,7 @@ function resetGameState() {
     selectedPawnIndex = -1;
     gameOver = false;
     messageArea.textContent = '';
-    resetGameButton.style.display = 'block'; 
+    gameControls.style.display = 'flex'; 
 }
 
 function renderBoard() {
@@ -498,6 +500,18 @@ function startGame(mode) {
 // Event Listeners
 startPvpButton.addEventListener('click', () => startGame('pvp'));
 startPvcButton.addEventListener('click', () => startGame('pvc'));
+resetGameButton.addEventListener('click', () => {
+    // Starts a new game with the same mode
+    startGame(gameMode);
+});
+
+backToSelectBtn.addEventListener('click', () => {
+    gameScreen.style.display = 'none';
+    menuScreen.style.display = 'flex';
+    // Hide game controls when going back to menu
+    gameControls.style.display = 'none';
+});
+
 playAgainButton.addEventListener('click', () => {
     victoryScreen.style.display = 'none';
     menuScreen.style.display = 'block';
