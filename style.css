@@ -22,7 +22,7 @@ body {
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-#menu-screen, #victory-screen {
+#menu-screen, #victory-screen, #rules-screen {
     text-align: center;
     padding: 20px;
 }
@@ -205,8 +205,33 @@ body {
 
 #victory-effect {
     font-size: 4em;
-    animation: confetti-fall 2s ease-out forwards;
-    text-shadow: 0 0 15px gold;
+    margin: 20px 0;
+}
+
+.rules-content {
+    max-height: 50vh; /* 画面の高さの50%を最大値に */
+    overflow-y: auto; /* 内容がはみ出たら縦スクロール */
+    background-color: rgba(255, 255, 255, 0.6);
+    padding: 15px 25px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: left;
+    border: 1px solid rgba(0,0,0,0.1);
+    max-width: 600px; /* 最大幅を設定 */
+}
+
+.rules-content p,
+.rules-content ul {
+    margin-bottom: 1em;
+    line-height: 1.6;
+}
+
+.rules-content ul {
+    padding-left: 20px;
+}
+
+.rules-content strong {
+    color: #5a3d2b;
 }
 
 @keyframes confetti-fall {

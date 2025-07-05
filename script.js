@@ -16,7 +16,9 @@ const gameControls = document.querySelector('.game-controls');
 const resetGameButton = document.getElementById('reset-game');
 const backToSelectBtn = document.getElementById('back-to-select-btn'); 
 const playAgainButton = document.getElementById('play-again');
-
+const showRulesBtn = document.getElementById('show-rules-btn');
+const backToMenuBtn = document.getElementById('back-to-menu-btn');
+const rulesScreen = document.getElementById('rules-screen'); 
 
 let cells = [];
 let pawns = [];

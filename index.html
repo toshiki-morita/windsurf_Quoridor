@@ -13,6 +13,35 @@
             <h1>コリドール</h1>
             <button id="start-pvp" class="menu-button">プレイヤー対戦</button>
             <button id="start-pvc" class="menu-button">CPU対戦</button>
+            <button id="show-rules-btn" class="menu-button">遊び方</button>
+        </div>
+
+        <div id="rules-screen" style="display:none;">
+            <h2>遊び方</h2>
+            <div class="rules-content">
+                <p><strong>目的:</strong></p>
+                <p>自分のコマを、反対側の向かい合ったゴールラインに一番先に到達させたプレイヤーが勝利です。</p>
+                <p><strong>自分のターンにできること:</strong></p>
+                <p>以下のいずれか１つを選択します。</p>
+                <ul>
+                    <li><strong>コマを1マス進める:</strong> 前後左右の隣接するマスに移動できます。斜めには進めません。</li>
+                    <li><strong>壁を1枚置く:</strong> 盤上の溝に壁を置きます。壁は2マス分の長さです。</li>
+                </ul>
+                <p><strong>コマの移動ルール:</strong></p>
+                <ul>
+                    <li>他のコマがいるマスには移動できません。</li>
+                    <li>他のコマと隣接した場合、そのコマを飛び越えることができます（ジャンプ）。</li>
+                    <li>ジャンプ先に壁がある場合は、そのコマの左右（斜め方向）に移動できます。</li>
+                </ul>
+                <p><strong>壁の設置ルール:</strong></p>
+                <ul>
+                    <li>壁は必ず2マスにまたがるように置きます。</li>
+                    <li>他の壁と交差するようには置けません。</li>
+                    <li>相手または自分のコマがゴールにたどり着けなくなるような置き方は禁止です。</li>
+                    <li>壁は各プレイヤー10枚ずつ持っています。一度置いた壁は動かせません。</li>
+                </ul>
+            </div>
+            <button id="back-to-menu-btn" class="menu-button">戻る</button>
         </div>
 
         <div id="game-screen" style="display:none;">
