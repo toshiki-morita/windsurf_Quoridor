@@ -185,6 +185,9 @@ function updatePlayerInfo() {
 function handlePawnClick(pawnIndex) {
     if (gameOver || pawnIndex !== currentPlayer) return;
 
+    // In PVC mode, player 1 is AI and cannot be controlled by click.
+    if (gameMode === 'pvc' && pawnIndex === 1) return;
+
     if (selectedPawnIndex === pawnIndex) {
         // Deselect
         selectedPawnIndex = -1;
@@ -296,19 +299,29 @@ function getValidMoves(r, c) {
     return moves;
 }
 
-function isMoveBlockedByWall(r1, c1, r2, c2) {
+function isMoveBlockedByWallWithState(r1, c1, r2, c2, hWalls, vWalls) {
     if (r1 === r2) { // Horizontal move
-        const groove_col = Math.min(c1, c2);
-        return verticalWalls[r1-1] && verticalWalls[r1-1][groove_col] || 
-               verticalWalls[r1] && verticalWalls[r1][groove_col];
+        const c = Math.min(c1, c2);
+        if (r1 < BOARD_SIZE - 1 && vWalls[r1] && vWalls[r1][c]) return true;
+        if (r1 > 0 && vWalls[r1 - 1] && vWalls[r1 - 1][c]) return true;
     } else { // Vertical move
-        const groove_row = Math.min(r1, r2);
-        return horizontalWalls[groove_row][c1-1] || 
-               horizontalWalls[groove_row][c1];
+        const r = Math.min(r1, r2);
+        if (c1 < BOARD_SIZE - 1 && hWalls[r] && hWalls[r][c1]) return true;
+        if (c1 > 0 && hWalls[r] && hWalls[r][c1 - 1]) return true;
     }
+    return false;
+}
+
+function isMoveBlockedByWall(r1, c1, r2, c2) {
+    return isMoveBlockedByWallWithState(r1, c1, r2, c2, horizontalWalls, verticalWalls);
 }
 
 function handleWallSlotClick(r_slot, c_slot, type) {
+    // Block human wall placement during AI's turn
+    if (gameMode === 'pvc' && currentPlayer === 1) {
+        showMessage("CPUの思考中です...");
+        return;
+    }
     if (gameOver || selectedPawnIndex !== -1) { 
         if(selectedPawnIndex !== -1) showMessage("コマを移動するか、選択を解除してください。");
         return;
@@ -384,21 +397,7 @@ function canPawnReachGoal(pawn, currentHWalls, currentVWalls) {
             const newC = c + dc;
 
             if (newR >= 0 && newR < BOARD_SIZE && newC >= 0 && newC < BOARD_SIZE && !visited.has(`${newR},${newC}`)) {
-                 // Simplified isMoveBlockedByWall logic for this context
-                let blocked = false;
-                if (r === newR) { // Horizontal move
-                    const groove_col = Math.min(c, newC);
-                    if( (currentVWalls[r-1] && currentVWalls[r-1][groove_col]) || (currentVWalls[r] && currentVWalls[r][groove_col]) ) {
-                        blocked = true;
-                    }
-                } else { // Vertical move
-                    const groove_row = Math.min(r, newR);
-                     if( (currentHWalls[groove_row][c-1]) || (currentHWalls[groove_row][c]) ) {
-                        blocked = true;
-                    }
-                }
-
-                if (!blocked) {
+                if (!isMoveBlockedByWallWithState(r, c, newR, newC, currentHWalls, currentVWalls)) {
                     visited.add(`${newR},${newC}`);
                     q.push({ r: newR, c: newC });
                 }
@@ -408,69 +407,134 @@ function canPawnReachGoal(pawn, currentHWalls, currentVWalls) {
     return false;
 }
 
+
+
+
+function getPathLength(startR, startC, goalRow, currentHWalls, currentVWalls) {
+    const q = [{ r: startR, c: startC, dist: 0 }];
+    const visited = new Set([`${startR},${startC}`]);
+
+    while (q.length > 0) {
+        const { r, c, dist } = q.shift();
+        if (r === goalRow) return dist;
+
+        const validMoves = getValidMovesForPathfinding(r, c, currentHWalls, currentVWalls);
+
+        for (const move of validMoves) {
+            if (!visited.has(`${move.r},${move.c}`)) {
+                visited.add(`${move.r},${move.c}`);
+                q.push({ r: move.r, c: move.c, dist: dist + 1 });
+            }
+        }
+    }
+    return Infinity; // No path found
+}
+
+function getValidMovesForPathfinding(r, c, currentHWalls, currentVWalls) {
+    const moves = [];
+    const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
+    for (const [dr, dc] of directions) {
+        const newR = r + dr;
+        const newC = c + dc;
+
+        if (newR >= 0 && newR < BOARD_SIZE && newC >= 0 && newC < BOARD_SIZE) {
+            let blocked = false;
+            if (r === newR) { // Horizontal move
+                const groove_col = Math.min(c, newC);
+                if ((currentVWalls[r - 1] && currentVWalls[r - 1][groove_col]) || (currentVWalls[r] && currentVWalls[r][groove_col])) {
+                    blocked = true;
+                }
+            } else { // Vertical move
+                const groove_row = Math.min(r, newR);
+                if ((currentHWalls[groove_row][c - 1]) || (currentHWalls[groove_row][c])) {
+                    blocked = true;
+                }
+            }
+            if (!blocked) {
+                moves.push({ r: newR, c: newC });
+            }
+        }
+    }
+    return moves;
+}
+
+
 function makeAIMove() {
     if (gameOver) return;
 
     const aiPawnIndex = 1;
-    const humanPawnIndex = 0;
+    const playerPawnIndex = 0;
     const aiPawn = pawns[aiPawnIndex];
-    const humanPawn = pawns[humanPawnIndex];
+    const playerPawn = pawns[playerPawnIndex];
 
-    // --- AI MOVE LOGIC ---
-    let validMoves = getValidMoves(aiPawn.r, aiPawn.c);
-    if (validMoves.length === 0) {
-        switchTurn(); // No valid moves, skip turn.
+    // --- 1. Evaluate best pawn move --- (Finds the 'least bad' move)
+    let bestMove = null;
+    let bestMoveValue = Infinity;
+    const possibleMoves = getValidMoves(aiPawn.r, aiPawn.c);
+
+    if (possibleMoves.length === 0) {
+        console.log("AI has no moves! Passing turn.");
+        switchTurn(); // No possible moves, pass turn.
         return;
     }
 
-    // Score each move based on how close it gets to the goal (row 0). Lower score is better.
-    validMoves.forEach(move => {
-        move.score = move.r;
-    });
+    const myCurrentPath = getPathLength(aiPawn.r, aiPawn.c, aiPawn.goalRow, horizontalWalls, verticalWalls);
 
-    // Sort moves by score, to find the best one.
-    validMoves.sort((a, b) => a.score - b.score);
-    const bestMove = validMoves[0];
-
-    // --- AI WALL PLACEMENT LOGIC ---
-    let wallToPlace = null;
-
-    // Heuristic: If the AI has walls and the human is close to winning, consider blocking.
-    const humanGoalRow = pawns[humanPawnIndex].goalRow;
-    const humanCurrentDistance = Math.abs(humanPawn.r - humanGoalRow);
-    
-    const aiGoalRow = pawns[aiPawnIndex].goalRow;
-    const aiCurrentDistance = Math.abs(aiPawn.r - aiGoalRow);
-
-    // Consider placing a wall if the human is ahead or tied in distance, and not right at the goal.
-    if (playerWallsRemaining[aiPawnIndex] > 0 && humanCurrentDistance <= aiCurrentDistance && humanCurrentDistance > 1) {
-        // Try to place a horizontal wall in front of the human player.
-        const wallGrooveR = humanPawn.r; // Human is P1, goal is row 8. They move with increasing r.
-        const wallCandidateC1 = humanPawn.c - 1;
-        const wallCandidateC2 = humanPawn.c;
-
-        // Check if placing a wall at candidate positions is valid.
-        if (wallCandidateC1 >= 0 && isValidWallPlacement(wallGrooveR, wallCandidateC1, 'h')) {
-            wallToPlace = { r: wallGrooveR, c: wallCandidateC1, type: 'h' };
-        } else if (wallCandidateC2 < BOARD_SIZE - 1 && isValidWallPlacement(wallGrooveR, wallCandidateC2, 'h')) {
-            wallToPlace = { r: wallGrooveR, c: wallCandidateC2, type: 'h' };
+    for (const move of possibleMoves) {
+        const path = getPathLength(move.r, move.c, aiPawn.goalRow, horizontalWalls, verticalWalls);
+        if (path < bestMoveValue) {
+            bestMoveValue = path;
+            bestMove = move;
         }
     }
 
-    // --- DECISION ---
-    // If a good wall placement was found and moving isn't an overwhelmingly better option (like winning).
-    if (wallToPlace && bestMove.score > aiPawn.goalRow) {
-        placeWall(wallToPlace.r, wallToPlace.c, wallToPlace.type);
+    // --- 2. Evaluate best wall placement ---
+    let bestWall = null;
+    let maxPlayerPathIncrease = 0;
+    if (playerWallsRemaining[aiPawnIndex] > 0) {
+        const playerCurrentPath = getPathLength(playerPawn.r, playerPawn.c, playerPawn.goalRow, horizontalWalls, verticalWalls);
+        if (playerCurrentPath !== Infinity) { // Only check for walls if player has a path
+            for (let r_slot = 0; r_slot < BOARD_SIZE - 1; r_slot++) {
+                for (let c_slot = 0; c_slot < BOARD_SIZE - 1; c_slot++) {
+                    // Check horizontal and vertical wall placements
+                    ['h', 'v'].forEach(type => {
+                        if (isValidWallPlacement(r_slot, c_slot, type)) {
+                            const tempH = horizontalWalls.map(row => [...row]);
+                            const tempV = verticalWalls.map(row => [...row]);
+                            if (type === 'h') tempH[r_slot][c_slot] = true;
+                            else tempV[r_slot][c_slot] = true;
+
+                            const newPlayerPath = getPathLength(playerPawn.r, playerPawn.c, playerPawn.goalRow, tempH, tempV);
+                            if (newPlayerPath > playerCurrentPath && newPlayerPath !== Infinity) {
+                                const increase = newPlayerPath - playerCurrentPath;
+                                if (increase > maxPlayerPathIncrease) {
+                                    maxPlayerPathIncrease = increase;
+                                    bestWall = { r: r_slot, c: c_slot, type };
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        }
+    }
+
+    // --- 3. Decide and act ---
+    const myPathImprovement = myCurrentPath - bestMoveValue;
+
+    // Place a wall if its impact on the player is greater than the benefit of our best move.
+    if (bestWall && maxPlayerPathIncrease > myPathImprovement) {
+        placeWall(bestWall.r, bestWall.c, bestWall.type);
         playerWallsRemaining[aiPawnIndex]--;
         if (placeWallSound) placeWallSound.triggerAttackRelease("G2", "0.1s");
         switchTurn();
-        renderBoard();
     } else {
-        // Otherwise, make the best move.
+        // Otherwise, make the best move available.
+        // bestMove is guaranteed to be non-null here because we checked for possibleMoves.length > 0
         movePawn(aiPawnIndex, bestMove.r, bestMove.c);
     }
 }
-
 
 function showMessage(msg) {
     messageArea.textContent = msg;
