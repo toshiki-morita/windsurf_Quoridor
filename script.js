@@ -586,6 +586,16 @@ resetGameButton.addEventListener('click', () => {
     startGame(gameMode);
 });
 
+showRulesBtn.addEventListener('click', () => {
+    menuScreen.style.display = 'none';
+    rulesScreen.style.display = 'block';
+});
+
+backToMenuBtn.addEventListener('click', () => {
+    rulesScreen.style.display = 'none';
+    menuScreen.style.display = 'block';
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     // The game starts from the menu, so no need to call startGame here.
 });
